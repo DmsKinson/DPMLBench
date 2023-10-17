@@ -15,12 +15,10 @@ from models import get_model
 from DataFactory import DataFactory
 import tools
 from tqdm import tqdm
-from data_manager import get_md5
 from semisupervise import uda   
 from semisupervise.uda_transform import rand_aug_process
 import sqlite_proxy
 from torchvision import transforms
-
 
 from tools import test, DatasetWithNewlable
 import time
@@ -106,8 +104,9 @@ def main(args):
     private_set = df.getTrainSet()
     whole_set = df.getTestSet('full',transform_list=[transforms.ToTensor(),transforms.Resize(32)])
 
-    feature_root = os.path.join(pwd,'feature',args.dataset,args.net)
-    if(not os.path.exists(feature_root)):
+    feature_root = os.path.join(pwd, 'feature', args.dataset, args.net)
+    
+    if(not os.path.isdir(feature_root)):
         os.makedirs(feature_root)
     indices_path = os.path.join(feature_root,f'indices_{args.n_whole_samples}.pt')
     if(os.path.exists(indices_path)):
@@ -169,13 +168,9 @@ def main(args):
 
     sess = f'{args.net}_{args.dataset}_e{args.epoch}_{args.eps}_uda'
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, model, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum, extra='uda')
-    sqlite_proxy.rpc_insert_net(ent)
-
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra='uda')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

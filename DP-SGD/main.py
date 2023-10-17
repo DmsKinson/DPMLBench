@@ -17,10 +17,8 @@ import tools
 import argparse
 import time
 import sqlite_proxy
-from data_manager import get_md5
 from opacus.validators import ModuleValidator
 from clip_only_utils import ClipOnlyPrivacyEngine
-import logging
 
 from models import get_model
 
@@ -134,12 +132,9 @@ def main(args):
             sess += f'_eps{args.eps:.2f}'
         
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{args.actv.lower()}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{args.actv.lower()}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=args.actv, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum, extra=args.extra)
-    sqlite_proxy.rpc_insert_net(ent)
+    sqlite_proxy.insert_net(func=args.actv, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra=args.extra)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Differentially Private learning with DP-SGD')
@@ -168,7 +163,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if(args.private):
-        assert (args.eps!=None) ^ (args.extra=='clip_only'),  f'when args.private is set, one of args.eps and clip_only must be set'
+        assert (args.eps!=None) or (args.extra=='clip_only'),  f'when args.private is set, one of args.eps and clip_only must be set'
 
     # set max physical batchsize avoiding out of memory  
     MAX_BATCHSIZE={

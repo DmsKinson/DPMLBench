@@ -70,6 +70,8 @@ class DataFactory():
         self.which = which.lower()
         assert self.which in SUPPORTED
         self.transform = TRANSFORM_DICT[self.which]
+        if(not os.path.isdir(data_root)):
+            os.makedirs(data_root)
         self.dataRoot = data_root
         
     def _getTestSet(self, transform_list:Iterable = None):        

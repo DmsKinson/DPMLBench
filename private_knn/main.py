@@ -1,4 +1,4 @@
-import sys
+import sys,os
 
 import numpy as np
 
@@ -15,7 +15,6 @@ from models import get_model
 from DataFactory import DataFactory
 import tools
 from tqdm import tqdm
-from data_manager import get_md5
 import sqlite_proxy
 
 from tools import train, test, DatasetWithNewlable
@@ -44,10 +43,10 @@ def aggreagation(teacher_preds, sigma):
 
     return noisy_label
 
-def prepare_stu_dataset(public_set,private_set, is_hog:bool, sample_prob:float, n_teacher:int, sigma:float, device, model=None):
+def prepare_stu_dataset(public_set,private_set, is_hog:bool, sample_prob:float, n_teacher:int, sigma:float, root_dir:str, device, model=None):
     print('Prepare student dataset')
     sess = f'{args.net}_{args.dataset}_{args.n_teacher}_{args.n_stu_trainset}'
-    fe = FeatureExtractor(sess, device)
+    fe = FeatureExtractor(root_dir, sess, device)
     if(is_hog):
         pri_feature, pri_label = fe.extract_feature_with_hog(private_set, prefix='pri')
         pub_feature, pub_label = fe.extract_feature_with_hog(public_set, prefix='pub')
@@ -73,7 +72,7 @@ def prepare_stu_dataset(public_set,private_set, is_hog:bool, sample_prob:float, 
     
     noisy_label = aggreagation(teachers_preds, sigma)
 
-    acc = cal_ensemble_acc(public_set, noisy_label)
+    acc = cal_ensemble_acc(public_set, noisy_label, device)
     print('\nNoisy dataset accuracy=',acc)
 
     noisy_set = DatasetWithNewlable(public_set,noisy_label)
@@ -87,6 +86,10 @@ def main(args):
     model = get_model(args.net, args.dataset).to(device)
 
     df = DataFactory(args.dataset)
+    feature_root = os.path.join(pwd,'feature',args.dataset,args.net)
+
+    if(not os.path.isdir(feature_root)):
+        os.makedirs(feature_root)
     private_set = df.getTrainSet()
     testset = df.getTestSet()
     public_set, testset = random_split(testset, [args.n_stu_trainset, len(testset) - args.n_stu_trainset])
@@ -111,7 +114,7 @@ def main(args):
     csv_list = []
     for s in range(args.iter):
         print('Stage:',s)
-        stu_dataset = prepare_stu_dataset(public_set, private_set, is_hog=(s==0), sample_prob=args.sample_prob, n_teacher=args.n_teacher, sigma=sigma,device=device,model=model)
+        stu_dataset = prepare_stu_dataset(public_set, private_set, is_hog=(s==0), sample_prob=args.sample_prob, n_teacher=args.n_teacher, sigma=sigma, root_dir=feature_root, device=device,model=model)
         trainloader = DataLoader(stu_dataset, args.batchsize)
         # train student
         for e in range(args.epoch):
@@ -125,12 +128,9 @@ def main(args):
 
     sess = f'{args.net}_{args.dataset}_e{args.epoch}_{args.eps}'
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, model, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
-    sqlite_proxy.rpc_insert_net(ent)
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 
 if __name__ == '__main__':
@@ -141,7 +141,6 @@ if __name__ == '__main__':
     parser.add_argument('--n_stu_testset', default=1000, type=int, help='number of test set for student testing')
     parser.add_argument('--n_stu_trainset', default=1000, type=int, help='number of train set for student training')
     parser.add_argument('--data_root', default=pwd+'/../dataset')
-    # parser.add_argument('--teacher_root', default='teachers', type=str)
     parser.add_argument('--batchsize', default=512, type=int)
     parser.add_argument('--epoch', default=10, type=int)
     parser.add_argument('--lr', default=0.01, type=float)

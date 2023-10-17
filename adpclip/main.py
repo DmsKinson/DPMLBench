@@ -17,9 +17,7 @@ import tools
 import argparse
 import time
 import sqlite_proxy
-from data_manager import get_md5
 from opacus.validators import ModuleValidator
-import logging
 from adaclippe import AdpClipPE
 
 from models import get_model
@@ -127,12 +125,9 @@ def main(args):
         sess += f'_eps{args.eps:.2f}'
         
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum, extra=args.extra)
-    sqlite_proxy.rpc_insert_net(ent)
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra=args.extra)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Differentially Private learning with DP-SGD')

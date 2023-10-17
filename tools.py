@@ -11,7 +11,6 @@ import yaml
 import numpy as np
 import random   
 from db_models import DB_Model
-import config
 import time
 from torch.utils.data.dataset import Dataset
 
@@ -85,7 +84,6 @@ def load_attack_net(*args):
     res = DB_Model.get_or_none(*args)
     assert res != None, 'Error: query returns no records!'
     print('==> Loading model from : ',res.location)
-    assert res.host_ip == config.HOST_IP, f'model is not local:host={res.host_ip}'
     
     attack_net = torch.load(res.location)
     return attack_net
@@ -94,7 +92,6 @@ def load_model(*args):
     res = DB_Model.get_or_none(*args)
     assert res != None, 'Error: query returns no records!'
     print('==> Loading model from : ',res.location)
-    assert res.host_ip == config.HOST_IP, f'model is not local:host={res.host_ip}'
     arch = get_arch(func=res.func, net=res.net, dataset=res.dataset,)
     
     state_dict = torch.load(res.location)

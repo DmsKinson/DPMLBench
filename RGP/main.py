@@ -16,7 +16,6 @@ from DataFactory import DataFactory
 from get_noise_variance import get_sigma
 
 import tools
-from data_manager import get_md5
 import sqlite_proxy
 
 FUNC_NAME = 'rgp'
@@ -193,10 +192,8 @@ def main(args):
     ghost_params = []
 
     for p in net.named_parameters():
-        # print(p[0])
         # we do not reparametrize linear layer because it is already low-rank
         # except right layer
-        # print('name:',p[0])
         if('full' in p[0] or 'fc' in p[0]):
             params.append(p[1])
             p[1].requires_grad = False
@@ -205,10 +202,6 @@ def main(args):
 
     for p in params:
         p.cached_grad = None
-
-    # add the parameter of linear layer to low-rank parameters
-    # ghost_params += [params[-1]]
-
 
     # we use this optimizer to use the gradient reconstructed from the gradient carriers
     optimizer = optim.SGD(
@@ -250,12 +243,9 @@ def main(args):
         sess += f"_eps{args.eps:.2f}"
 
     csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
-    sqlite_proxy.rpc_insert_net(ent)
+    sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')

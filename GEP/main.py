@@ -18,15 +18,10 @@ import argparse
 
 import time
 import sqlite_proxy
-from data_manager import get_md5
 
 import models
 from utils import get_sigma, flatten_tensor
 from basis_matching import GEP
-from opacus.accountants.utils import get_noise_multiplier
-# #package for computing individual gradients
-# from backpack import backpack, extend
-# from backpack.extensions import BatchGrad
 
 FUNC_NAME = 'gep'
 
@@ -204,11 +199,9 @@ def main(args):
         sess += f'_eps{eps:.2f}'
 
     csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
     sqlite_proxy.rpc_insert_net(ent)
     
 if __name__ == "__main__":
@@ -218,8 +211,6 @@ if __name__ == "__main__":
     parser.add_argument('--dataset', default='cifar10', type=str, help='dataset name')
     parser.add_argument('--net', default='resnet', type=str, help='network for experiment')
     parser.add_argument('--dataroot', default=pwd+'/../dataset', type=str, help='directory of dataset stored or loaded')
-    # parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
-    # parser.add_argument('--sess', default='resnet20_cifar10', type=str, help='session name')
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--weight_decay', default=2e-4, type=float, help='weight decay')
     parser.add_argument('--batchsize', default=1000, type=int, help='batch size')
@@ -240,10 +231,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_groups', default=3, type=int, help='number of parameters groups')
     parser.add_argument('--num_bases', default=1000, type=int, help='dimension of anchor subspace')
 
-    # parser.add_argument('--real_labels', action='store_true', help='use real labels for auxiliary dataset')
-    # parser.add_argument('--aux_dataset', default='imagenet', type=str, help='name of the public dataset, [cifar10, cifar100, imagenet]')
     parser.add_argument('--aux_data_size', default=2000, type=int, help='size of the auxiliary dataset')
-
 
     args = parser.parse_args()
     main(args)

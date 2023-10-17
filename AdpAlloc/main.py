@@ -20,7 +20,6 @@ from tools import MemoryManagerProxy
 import tools
 import helper
 import sqlite_proxy
-from data_manager import get_md5
 
 FUNC_NAME = 'adp_alloc'
 
@@ -147,12 +146,9 @@ def main(args):
 
     sess = f"{args.net}_{args.dataset}_e{args.epoch}_eps{args.eps:.2f}"
     csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
-    sqlite_proxy.rpc_insert_net(ent)
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Differentially Private learning with DP-SGD')
@@ -161,8 +157,6 @@ if __name__ == "__main__":
     parser.add_argument('--net', default='simple', type=str, help='network for experiment')
     parser.add_argument('--dataset', default='mnist', type=str, help='dataset name')
     parser.add_argument('--data_root',default=pwd+'/../dataset', type=str, help='directory of dataset stored or loaded')
-    # parser.add_argument('--resume', '-r', action='store_true', help='resume from checkpoint')
-    # parser.add_argument('--sess', default='resnet20_cifar10', type=str, help='session name')
     parser.add_argument('--seed', default=5, type=int, help='random seed')
     parser.add_argument('--weight_decay', default=0., type=float, help='weight decay')
     parser.add_argument('--batchsize', default=512, type=int, help='batch size')

@@ -16,7 +16,6 @@ from loss_func import MSE_Focal, MSE_Focal_L2
 import sqlite_proxy
 import time
 from tools import MemoryManagerProxy
-from data_manager import get_md5
 
 FUNC_NAME = 'loss'
 
@@ -113,21 +112,14 @@ def main(args):
         csv_list.append((epoch, train_loss, train_acc, test_loss, test_acc, t1-t0, t2-t1))
         print(f'Train loss:{train_loss:.5f} train acc:{train_acc} test loss:{test_loss} test acc:{test_acc} time cost:{t2-t0:.2f}s')
 
-    # if(args.private):
-    #     eps, alpha = privacy_engine.get_privacy_spent(args.delta)
-    #     print(f"eps={eps} , alpha={alpha}")
     sess = f'{args.net}_{args.dataset}_e{args.epoch}'
     if(args.private):
         sess = sess+f'_eps{args.eps}'
     
     csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
-    sqlite_proxy.rpc_insert_net(ent)
-
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
