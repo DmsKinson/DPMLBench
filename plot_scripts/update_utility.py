@@ -5,11 +5,25 @@ pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(pwd+"/..") 
 
 import pandas as pd
-from db_models import DB_Csv,DB_Utility,db
+from db_models import DB_Csv,DB_Utility
+from peewee import *
+from tqdm import tqdm
+
+DATABASE_PATH = '/data2/zmh/workplace/paper-impl/DP-ML/database/main_2roe.db'
+main_db = SqliteDatabase(DATABASE_PATH)
+
+class DB_Csv(DB_Csv):
+    class Meta:
+        database = main_db
+        table_name = 'Csv'
+
+class DB_Utility(DB_Utility):
+    class Meta:
+        database = main_db
+        table_name = 'Utility'
 
 DB_Utility.delete().execute()
 # db.create_tables(DB_Utility)
-
 ents = DB_Csv.select()
 
 COLS_MAP = {
@@ -23,7 +37,7 @@ KNN_UDA_COL = ['idx','epoch','label_loss','unlabel_loss','test_loss','test_acc',
 DEFAULT_COL = ['epoch','train_loss','train_acc','test_loss','test_acc','train_cost','test_cost']
 
 value_list = []
-for ent in ents:
+for ent in tqdm(ents):
     if(ent.extra == 'uda' and ent.func != None):
         if(ent.func == 'pate'):
             csv = pd.read_csv(ent.location,names=PATE_UDA_COL)
@@ -61,7 +75,9 @@ for ent in ents:
     )
     value_list.append(value)
 
-with db.atomic():
+print(len(value_list),'records in total.')
+
+with main_db.atomic():
     DB_Utility.insert_many(value_list, 
         fields=[
             DB_Utility.func,

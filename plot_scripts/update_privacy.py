@@ -7,26 +7,31 @@ from tqdm import tqdm
 pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(pwd+"/..") 
 
-from db_models import DB_Attack, DB_Privacy,db
+from db_models import DB_Attack, DB_Privacy
 from name_map import *
 from sklearn import metrics
 import numpy as np
+from peewee import *
 
-# nets = ['simplenn','resnet','inception','vgg']
-# datasets = ['mnist','fmnist','svhn','cifar10']
-types = ['black','white','label']
-# shadow_dps = [True,False]
+DATABASE_PATH = '/data2/zmh/workplace/paper-impl/DP-ML/database/main.db'
+main_db = SqliteDatabase(DATABASE_PATH)
+
+class DB_Attack(DB_Attack):
+    class Meta:
+        database = main_db
+        table_name = 'Attack'
+
+class DB_Privacy(DB_Privacy):
+    class Meta:
+        database = main_db
+        table_name = 'Privacy'
+
+types = ['black','white']
 
 DB_Privacy.delete().execute()
-# db.create_tables(DB_Utility)
 
 ents = DB_Attack.select().where(
-    # DB_Attack.func != None,
-    # DB_Attack.net << nets,
-    # DB_Attack.dataset << datasets,
     DB_Attack.type << types,
-    # DB_Attack.extra == None,
-    # DB_Attack.shadow_dp << shadow_dps,
 )
 
 value_list = []
@@ -45,6 +50,7 @@ for ent in tqdm(ents):
         y_pred = (y_score>0.5).long()
         fpr, tpr, thresholds = metrics.roc_curve(y_score=y_score, y_true=y_true)
         auc = metrics.auc(fpr,tpr)
+        
         tn, fp, fn, tp = metrics.confusion_matrix(y_pred=y_pred,y_true=y_true).ravel()
         tpr = tp/(tp+fn)
         fpr = fp/(fp+tn)
@@ -72,7 +78,10 @@ for ent in tqdm(ents):
     )
     value_list.append(value)
 
-with db.atomic():
+print(len(value_list),'records in total.')
+
+
+with main_db.atomic():
     DB_Privacy.insert_many(value_list, 
         fields=[
             DB_Privacy.func,

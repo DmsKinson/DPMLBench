@@ -12,12 +12,12 @@ FUNC_DB2TABLE = {
     'pate':'\\pate',
     'knn':'\\knn',
     'lp-2st':'\\lpmst',
-    'alibi':'\\alibi'
+    'alibi':'\\alibi',
+    'private-set':'\\privateset',
 }
 
 FUNC_DB2FIGURE = {
     'dpgen':'DPGEN',
-    'gswgan':'GS-WGAN',
     'handcraft':'Handcraft-DP',
     'tanh':'TanhActv',
     'loss':'FocalLoss',
@@ -29,7 +29,8 @@ FUNC_DB2FIGURE = {
     'pate':'PATE',
     'knn':'Private-kNN',
     'lp-2st':'LP-MST',
-    'alibi':'ALIBI'
+    'alibi':'ALIBI',
+    'private-set':'PrivateSet'
 }
 
 NETS_MAP = {
@@ -108,7 +109,7 @@ FUNCS_CFG_MAP = {
         'color':'#72D884',
         'display_name':FUNC_DB2FIGURE['knn'],
         'table_name':FUNC_DB2TABLE['knn'],
-        'marker':'+',
+        'marker':'<',
         'extra':'uda',
     },
     'pate':{
@@ -140,12 +141,13 @@ FUNCS_CFG_MAP = {
         'table_name':FUNC_DB2TABLE['dpgen'],
         'marker':'X'
     },
-    'gswgan':{
-        'db_name':'gswgan',
+    'private-set':{
+        'db_name':'private-set',
         'color':'#97057F',
-        'display_name':FUNC_DB2FIGURE['gswgan'],
-        'table_name':FUNC_DB2TABLE['gswgan'],
+        'display_name':FUNC_DB2FIGURE['private-set'],
+        'table_name':FUNC_DB2TABLE['private-set'],
         'marker':'s'
-    }
+    },
+    
 }
 

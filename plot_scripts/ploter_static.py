@@ -6,13 +6,22 @@ import argparse
 from enum import Enum
 from matplotlib import ticker
 from matplotlib.axes import Axes
-from db_models import DB_Privacy, DB_Utility
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 import csv
 import time
 import numpy as np
 from name_map import NETS_MAP, DATASETS_MAP, FUNCS_CFG_MAP,FUNC_DB2FIGURE,FUNC_DB2TABLE
+
+from db_models import DB_AccStat, DB_PrivacyStat
+import logging
+
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s %(funcName)s : %(message)s",
+    level=logging.INFO,
+    stream=sys.stderr
+)
+logger = logging.getLogger('ploter')
 
 DEFAULT_CSV_MAP = {
     'epoch':0,'train_loss':1,'train_acc':2,'test_loss':3,'test_acc':4, 'train_cost':5, 'test_cost':6
@@ -181,17 +190,10 @@ class AccPloter():
         axe.xaxis.set_label_position("top")
         axe.set_ylim(-1,101)
         axe.set_xlim(0.15,1100)
-        # if(y!=self.n_row-1):
         axe.tick_params(axis='both', which='both', direction='in')
         axe.tick_params(axis='x', which='minor', length=3)
         axe.tick_params(axis='both', which='major', length=5)
 
-        # axe.set_xticks(ticks=self.eps)
-        # axe.set_xticklabels(self.xlabels, rotation=270, ha="center",va='center_baseline')
-        # axe.xaxis.set_major_formatter(ticker.ScalarFormatter())
-        # axe.xaxis.set_major_locator(ticker.FixedLocator(self.eps))
-        # axe.xaxis.set_major_formatter(ticker.FixedFormatter(self.xlabels))
-        # axe.yaxis.set_major_locator(ticker.FixedLocator([0,20,40,60,80,100]))
         
         if(y==0):
             axe.set_xlabel(net, fontsize=self.LABEL_SIZE)
@@ -209,10 +211,11 @@ class AccPloter():
                     # special case
                     if(config['db_name'] == 'gep' and net in ['inception','vgg']):
                         continue
-                    ypoints = self.query_ypoints(config['db_name'], net, dataset, config)
+                    ypoints,stds = self.query_ypoints(config['db_name'], net, dataset)
                     # ypoints = [100*(1-y/baseline) for y in ypoints]
                     length = len(ypoints)
-                    axe.plot(self.eps[:length],ypoints,marker=config['marker'], markersize=7, markerfacecolor='white', c=config['color'], label=config.get('display_name',config['db_name']))
+                    axe.plot(self.eps[:length], ypoints, marker=config['marker'], markersize=5, markerfacecolor='white', c=config['color'], label=config.get('display_name',config['db_name']))
+                    axe.errorbar(self.eps[:length], ypoints, stds, c=config['color'],fmt='none',capsize=3)
         # get legends from simple-mnist setting, which has all funcs
         handles, labels = self.axes_tuple[0,0].get_legend_handles_labels()
         labels.append(self.dash_name)
@@ -230,44 +233,46 @@ class AccPloter():
         self.fig.savefig(f'{pwd}/../figure/{self.figure_name}.{self.format}',bbox_inches='tight')
 
     def get_baseline(self, net, dataset):
-        ent = DB_Utility.get_or_none(
-            DB_Utility.func=='relu', 
-            DB_Utility.net==net, 
-            DB_Utility.dataset==dataset, 
-            DB_Utility.eps==None, 
+        ent = DB_AccStat.get_or_none(
+            DB_AccStat.func=='relu', 
+            DB_AccStat.net==net, 
+            DB_AccStat.dataset==dataset, 
+            DB_AccStat.eps==None, 
         )
         if(ent == None):
-            print(f'==> No baseline for {net}_{dataset}')
+            logger.warning(f'No baseline for {net}_{dataset}')
             return 100
-        return ent.test_acc
+        return ent.mean
 
-    def query_ypoints(self, func, net, dataset, config):
+    def query_ypoints(self, func, net, dataset):
+        logger.debug(f"{func,net,dataset}")
         ypoints = []
+        stds = []
         for eps in self.eps:
-            # convert inf_eps to None in db query
-            if(eps == self.inf_eps):
-                eps = None
-            ent = DB_Utility.get_or_none(
-                DB_Utility.func==func, 
-                DB_Utility.net==net, 
-                DB_Utility.dataset==dataset, 
-                DB_Utility.eps==eps,
-                DB_Utility.type=='target',
-                DB_Utility.extra==config.get('extra',None)
+            if(func in ['alibi','lp-2st']):
+                eps *= 2
+            ent = DB_AccStat.get_or_none(
+                DB_AccStat.func==func, 
+                DB_AccStat.net==net, 
+                DB_AccStat.dataset==dataset, 
+                DB_AccStat.eps==eps,
             )
             # TODO: remove when all experiments end
             if(ent == None):
                 if(eps == None):
                     continue
                 ypoints.append(0)
-                print(f'==> No record for {func}_{net}_{dataset}_{eps}')
+                stds.append(0)
+                logger.warning(f'No record for {func}_{net}_{dataset}_{eps}')
                 continue
             try:
-                ypoints.append(ent.test_acc) 
+                ypoints.append(ent.mean) 
+                stds.append(ent.std)
             except Exception as e:
-                print('Error:',e)
+                logger.error(f'{e}')
                 ypoints.append(0)
-        return np.array(ypoints) 
+                stds.append(0)
+        return np.array(ypoints), np.array(stds)
 
 class MiaPloter(AccPloter):
     def __init__(
@@ -354,40 +359,46 @@ class MiaPloter(AccPloter):
 
     def query_ypoints(self, func, net, dataset, shadow_dp=False):
         ypoints = []
+        stds = []
         for eps in self.EPS:
             if(eps == 'inf'):
                 eps = None
-            ent = DB_Privacy.get_or_none(
-                DB_Privacy.func==func, 
-                DB_Privacy.net==net,
-                DB_Privacy.dataset==dataset,
-                DB_Privacy.type==self.attack_type, 
-                DB_Privacy.eps==eps, 
-                DB_Privacy.shadow_dp==shadow_dp
+            ent = DB_PrivacyStat.get_or_none(
+                DB_PrivacyStat.func==func, 
+                DB_PrivacyStat.net==net,
+                DB_PrivacyStat.dataset==dataset,
+                DB_PrivacyStat.type==self.attack_type, 
+                DB_PrivacyStat.eps==eps, 
+                DB_PrivacyStat.shadow_dp==shadow_dp
             )
             if(ent == None):
                 ypoints.append(0)
                 print(f'==> No record for {self.attack_type}_{func}_{net}_{dataset}_{eps}')
                 continue
-            metric = self.get_metric(ent)
-            ypoints.append(metric)
-        return ypoints
+            if(self.attack_type == 'black'):
+                mean = ent.black_mean
+                std = ent.black_std
+            else:
+                mean = ent.white_mean
+                std = ent.white_std
+            ypoints.append(mean)
+            stds.append(std)
+        return ypoints, stds
 
-    def get_baseline(self, net, dataset, type):
-        ent = DB_Privacy.get_or_none(
-            DB_Privacy.func=='relu',
-            DB_Privacy.net==net, 
-            DB_Privacy.dataset==dataset, 
-            DB_Privacy.eps==None, 
-            DB_Privacy.type==type, 
-            DB_Privacy.shadow_dp==False
+    def get_baseline(self, net, dataset):
+        ent = DB_PrivacyStat.get_or_none(
+            DB_PrivacyStat.func=='relu',
+            DB_PrivacyStat.net==net, 
+            DB_PrivacyStat.dataset==dataset, 
+            DB_PrivacyStat.eps==None, 
         )
         if(ent == None):
             print(f'==> No baseline for {net}_{dataset}')
             return 0
-        metric = self.get_metric(ent)
-        print(f'baseine of {net}_{dataset} is ',metric)
-        return metric
+
+        mean = ent.black_mean if self.attack_type=='black' else ent.white_mean
+        print(f'baseine of {net}_{dataset} is ',mean)
+        return mean
 
     def set_axe_format(self, x, net, y, dataset, axe):
         axe.yaxis.set_label_position("right")
@@ -426,22 +437,24 @@ class MultiMiaPloter(MiaPloter):
         self.display_dataset = 'CIFAR-10'
         self.fig , self.axes_tuple = plt.subplots(nrows=len(self.attack_types),ncols=len(self.NETS_MAP), figsize=(self.fig_width,self.fig_height),sharex='col',sharey='row', dpi=self.DPI,squeeze=False)
         self.fig.subplots_adjust(wspace=0.03, hspace=0.02)
+        self.error_params = {
+            'elinewidth':self.bar_width/10,
+        }
         self.shadow_dp = True
 
     def get_baseline(self, net, dataset, attack_type):
-        ent = DB_Privacy.get_or_none(
-            DB_Privacy.func=='relu',
-            DB_Privacy.net==net, 
-            DB_Privacy.dataset==dataset, 
-            DB_Privacy.eps==None, 
-            DB_Privacy.type==attack_type, 
-            DB_Privacy.shadow_dp==False
+        ent = DB_PrivacyStat.get_or_none(
+            DB_PrivacyStat.func=='relu',
+            DB_PrivacyStat.net==net,
+            DB_PrivacyStat.dataset==dataset, 
+            DB_PrivacyStat.eps==None, 
+            DB_PrivacyStat.type==attack_type
         )
         if(ent == None):
-            print(f'==> No baseline for {net}_{dataset}_{attack_type}')
+            logger.warning(f'No baseline for {net}_{dataset}_{attack_type}')
             return 0
-        metric = self.get_metric(ent)
-        print(f'baseine of {net}_{dataset} is ',metric)
+        metric = ent.prop_mean
+        logger.debug(f'baseine of {net}_{dataset} is {metric}')
         return metric
 
     def set_axe_format(self, x, net, y, dataset, axe):
@@ -465,27 +478,34 @@ class MultiMiaPloter(MiaPloter):
         axe.xaxis.set_tick_params(labelsize=self.X_TICK_SIZE)
         axe.yaxis.set_tick_params(labelsize=self.Y_TICK_SIZE)
 
-    def query_ypoints(self, func, net, dataset, attack_type, config,shadow_dp=False):
+    def query_ypoints(self, func, net, dataset, attack_type):
+        logger.debug(f"{func,net,dataset}")
+
         ypoints = []
+        stds = []
         for eps in self.EPS:
+            if(func in ['alibi','lp-2st']):
+                eps *= 2
             if(eps == 'inf'):
                 eps = None
-            ent = DB_Privacy.get_or_none(
-                DB_Privacy.func==func, 
-                DB_Privacy.net==net,
-                DB_Privacy.dataset==dataset,
-                DB_Privacy.type==attack_type, 
-                DB_Privacy.eps==eps, 
-                DB_Privacy.shadow_dp==False if func in ['pate','knn'] else shadow_dp,
-                DB_Privacy.extra == config.get('extra',None),
+            ent = DB_PrivacyStat.get_or_none(
+                DB_PrivacyStat.func==func, 
+                DB_PrivacyStat.net==net,
+                DB_PrivacyStat.dataset==dataset,
+                DB_PrivacyStat.eps==eps, 
+                DB_PrivacyStat.type==attack_type
             )
             if(ent == None):
                 ypoints.append(0)
-                print(f'==> No record for {attack_type}_{func}_{net}_{dataset}_{eps}')
+                stds.append(0)
+                logger.warning(f'==> No record for {attack_type}_{func}_{net}_{dataset}_{eps}')
                 continue
-            metric = self.get_metric(ent)
-            ypoints.append(metric)
-        return ypoints
+            
+            mean = ent.prop_mean
+            std = ent.prop_std
+            ypoints.append(mean)
+            stds.append(std)
+        return ypoints, stds
 
     def plot_and_save(self):
         for x, (net, display_net) in enumerate(self.NETS_MAP.items()) :
@@ -493,18 +513,13 @@ class MultiMiaPloter(MiaPloter):
                 axe:Axes = self.axes_tuple[y,x]
                 self.set_axe_format(x, display_net, y, attack_type.capitalize(), axe)
                 
-                baseline = self.get_baseline(net, self.dataset, attack_type,)
-                # axe.axhline(baseline, ls='--',c='black')
-
                 for i_func, config in enumerate(self.FUNCS_CFG) :
                     # special case
                     if(config['db_name'] == 'gep' and net in ['inception','vgg']):
                         continue
-                    ypoints = self.query_ypoints(config['db_name'], net, self.dataset, attack_type, config, self.shadow_dp)
-                    ## propotion to baseline (metric should be auc_norm)
-                    ypoints = [100*y/(baseline+1e-8) for y in ypoints]
-                    # ypoints = [baseline-y for y in ypoints]
-                    axe.bar(self.group_l+i_func*self.bar_width, ypoints, width=self.bar_width, color=config['color'], edgecolor='white', linewidth=0, label=config.get('display_name',config['db_name']),align='edge')
+                    ypoints, stds = self.query_ypoints(config['db_name'], net, self.dataset, attack_type)
+                    axe.bar(self.group_l+i_func*self.bar_width, ypoints, width=self.bar_width, color=config['color'], edgecolor='white', yerr=stds, error_kw=self.error_params, linewidth=0, label=config.get('display_name',config['db_name']),align='edge')
+                    # axe.errorbar(self.group_l+i_func*self.bar_width, ypoints, stds, fmt='none', c=config['color'])
         handles, labels = self.axes_tuple[0,0].get_legend_handles_labels()
         
         self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.14),labelspacing=1,ncol=len(self.FUNCS_CFG))
@@ -564,7 +579,7 @@ class ShadowDPPloter(MiaPloter):
 def main(args):
     # baseline 
     if(args.acc):
-        print('plot acc')
+        logger.info(f"Plot accuracy figure: {args.nets, args.datasets, args.funcs}")
         AccPloter(
             nets=args.nets,
             datasets=args.datasets,
@@ -618,6 +633,7 @@ def main(args):
         ).plot_and_save()
 
     if(args.multi):
+        logger.info(f"Plot multi-mia figure: {args.nets, args.datasets, args.funcs}")
         MultiMiaPloter(
             metric_type=args.metric,
             attack_type=args.type,
