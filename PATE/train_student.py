@@ -1,30 +1,20 @@
-from genericpath import exists
-import os
-import pathlib
-import random
+
 import sys
 pwd = sys.path[0]
 sys.path.append(pwd+'/..')
 
-import math
 import argparse
 import torch
-from torch.utils.data.dataset import Subset
 import utils
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from models import get_model
 from DataFactory import DataFactory
-import aggregation
 from utils import train, test
 import tools
-from tqdm import tqdm
-from data_manager import get_md5
 import sqlite_proxy
 
 FUNC_NAME = 'pate'
-
-
 
 def predict(net, dataloader: DataLoader, device):
     outputs =[]
@@ -78,13 +68,9 @@ def main(args):
     if(args.eps != None):
         sess += f'_eps{args.eps}'
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum)
-    sqlite_proxy.rpc_insert_net(ent)
-
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

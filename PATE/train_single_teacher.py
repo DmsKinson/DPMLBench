@@ -2,7 +2,6 @@ import sys
 pwd = sys.path[0]
 sys.path.append(pwd+'/..')
 
-from sqlite_proxy import insert_net
 from pathlib import Path
 import argparse
 

@@ -5,17 +5,17 @@ sys.path.append(os.path.join(pwd,'..'))
 import argparse
 import torch
 import utils
-from torch.utils.data import DataLoader,random_split,Subset
+from torch.utils.data import DataLoader,Subset
 import torch.optim as optim
 from models import get_model
 from DataFactory import DataFactory
-from utils import test,uda_dataset_process
+from utils import test
 import tools
-from data_manager import get_md5
 from semisupervise import uda   
-from semisupervise.uda_transform import rand_aug_process,TransformUDA
+from semisupervise.uda_transform import rand_aug_process
 from torchvision import transforms
 import sqlite_proxy
+
 FUNC_NAME = 'pate'
 
 def main(args):
@@ -49,7 +49,6 @@ def main(args):
     print("accuracy of noisy dataset:",acc)
     # replace with noisy dataset
     stu_trainset = utils.DatasetWithNewlable(new_dataset,new_labels)
-
 
     label_size = args.n_query
     indices = torch.randperm(len(stu_trainset))[:label_size]
@@ -86,12 +85,9 @@ def main(args):
     sess += '_uda'
 
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum,extra='uda')
-    sqlite_proxy.rpc_insert_net(ent)
+    sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra='uda')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -114,11 +110,6 @@ if __name__ == '__main__':
     parser.add_argument('--temperature_T', default=0.4, type=float, help='pseudo label temperature')
     parser.add_argument('--eps', default=None, type=float, help='privacy parameter epsilon')
     parser.add_argument('--delta', default=1e-5, type=float, help='desired delta')
-    # parser.add_argument('--agg_mode', default='LNMax', type=str, help='LNMax or GNMax')
-    # parser.add_argument('--sigma1', default=150, type=int, help='')
-    # parser.add_argument('--sigma2', default=40, type=int, help='')
-    # parser.add_argument('--gamma', default=0.025, type=float, help='Laplacian noise of inversed scale')
-    # parser.add_argument('--threshold', default=50, type=int, help='threshold in GNMax')
     parser.add_argument('--momentum', default=0.5, type=float)
 
     args = parser.parse_args()

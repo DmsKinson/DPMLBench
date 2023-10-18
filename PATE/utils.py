@@ -4,7 +4,6 @@ sys.path.append(os.path.join(pwd,'..'))
 
 from genericpath import exists
 import os
-import random
 import torch
 from torch.utils.data.dataset import Dataset
 import shutil
@@ -14,7 +13,6 @@ import math
 import aggregation
 from torch.utils.data.dataset import Subset
 from torch.utils.data.dataloader import DataLoader
-from torch.utils.data import random_split
 import pathlib 
 from tqdm import tqdm
 from tools import get_arch

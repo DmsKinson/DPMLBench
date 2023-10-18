@@ -11,7 +11,6 @@ from models import get_model
 from DataFactory import DataFactory
 from utils import test
 import tools
-from data_manager import get_md5
 import sqlite_proxy
 from semisupervise import generator, improved_GAN
 
@@ -65,12 +64,9 @@ def main(args):
     sess += '_semi'
 
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    # ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum,extra='semi')
-    # sqlite_proxy.rpc_insert_net(ent)
+    sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra='semi')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -79,7 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', default=2, type=int, help='random seed')
     parser.add_argument('--dataset', default='mnist', type=str)
     parser.add_argument('--data_root', default=os.path.join(pwd,'..','dataset'))
-    parser.add_argument('--n_whole_samples',required=True, default=1000, type=int, help='number of samples that student access to')
+    parser.add_argument('--n_whole_samples', default=1000, type=int, help='number of samples that student access to')
     parser.add_argument('--n_query', type=int, default=100, help='number of samples using the noisy aggregation mechanism, T in paper')
     # parser.add_argument('--teacher_root', default='teachers', type=str)
     parser.add_argument('--batchsize', default=200, type=int)
