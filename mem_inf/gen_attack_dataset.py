@@ -19,7 +19,9 @@ def gen_scripts(params):
 
 params = itertools.product(types,nets,datasets,udas,eps)
 # replace when need customization
-# params = [
-# ]
+params = [
+    # (type, net, datset, uda, eps)
+    ('black', 'resnet', 'cifar10', 'false', None)
+]
 
 gen_scripts(params)             

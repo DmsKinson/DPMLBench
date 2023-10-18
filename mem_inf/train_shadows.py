@@ -20,7 +20,6 @@ from torch.optim.sgd import SGD
 import tools
 import time
 import sqlite_proxy
-from data_manager import get_md5
 from clip_only_utils import ClipOnlyPrivacyEngine
 
 
@@ -138,12 +137,9 @@ def main(args):
     if(args.extra != None):
         sess += f'_{args.extra}'
     csv_path = tools.save_csv(sess, csv_list, exp_dir.as_posix())
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, net, model_dir.as_posix())
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), model_type=sqlite_proxy.TYPE_SHADOW, exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum,extra=args.extra)
-    sqlite_proxy.rpc_insert_net(ent)
+    ent = sqlite_proxy.insert_net(net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), model_type=sqlite_proxy.TYPE_SHADOW, exp_loc=csv_path, model_loc=net_path, extra=args.extra)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -104,7 +104,6 @@ class AttacksetGenerator():
     Getter_dict = {
         'black':BlackBoxGetter,
         'white':WhiteBoxGetter,
-        # 'white_old':WhiteBoxOldGetter
     }
 
     def __init__(self, net, dataset, eps, attack_type, is_uda=False) -> None:
@@ -123,11 +122,13 @@ class AttacksetGenerator():
             DB_Model.eps==eps, 
             DB_Model.dataset==dataset, 
             DB_Model.type==TYPE_SHADOW,
-            DB_Model.extra=='uda' if is_uda else None
+            DB_Model.extra==('uda' if is_uda else None)
         )
         if(attack_type == 'white'):
             self.shadow_model = GradSampleModule(self.shadow_model)
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        if(not self.attack_set_dir.is_dir()):
+            self.attack_set_dir.mkdir(parents=True)
 
     def prepare_dataset(self):
         print('Prepare dataset')
@@ -172,7 +173,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--type', default='black', type=str, choices=['black','white','label'])
+    parser.add_argument('--type', default='black', type=str, choices=['black','white'])
     parser.add_argument("--dataset", type=str, default="cifar10", help="Dataset to run training",)
     parser.add_argument("--net", type=str, default="simplenn",)
     parser.add_argument("--seed", type=int, default=11337, help="Seed")

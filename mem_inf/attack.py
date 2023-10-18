@@ -19,9 +19,7 @@ import argparse
 from DataFactory import DataFactory,TRANSFORM_DICT
 from sklearn import metrics
 import tools
-import config
 from AttackFactory import get_attack
-from data_manager import get_md5
 import numpy as np
 import time
 
@@ -39,22 +37,18 @@ def save_posterior(infer, attack_type:str, func:str, net:str, dataset:str, eps:f
     if(extra != None):
         sess += extra
     posterior_path = tools.save_pt(sess, infer, dst_dir=mia_dir.as_posix())
-    posterior_checksum = get_md5(posterior_path)
 
-    ent = sqlite_proxy.insert_mia(
+    sqlite_proxy.insert_mia(
         type=attack_type,
         func=func,
         net=net,
         dataset=dataset,
         eps=eps,
         prob_loc=posterior_path,
-        prob_checksum=posterior_checksum,
         auc=auc,
-        host_ip=config.HOST_IP,
         shadow_dp=shadow_dp,
         extra=extra,
     )
-    sqlite_proxy.rpc_insert_mia(ent)
 
 def load_stu_test_indices(func:str,net:str,dataset:str):
     print('load student test indices.')
@@ -135,21 +129,6 @@ def main(args):
     if(args.type=='white'):
         if(args.func != 'rgp'):
             target_model = GradSampleModule(target_model)
-    elif(args.type=='label'):
-        print('Calibrating threshold')
-        # if(args.func=='handcraft'):
-        #     x_train, y_train = next(iter(DataLoader(df.getTrainSet('shadow',transform_add=[transforms.Resize(32*4)]), infer_length, shuffle=True)))
-        #     x_test, y_test = next(iter(DataLoader(df.getTestSet('shadow',transform_add=[transforms.Resize(32*4)]), infer_length, shuffle=True)))
-        #     # from kymatio.torch import Scattering2D
-        #     # scattering = Scattering2D(2, [32*4,32*4])
-        #     # K = 81 if(args.dataset in ['mnist','fmnist']) else 3*81
-        #     # x_train,x_test = scattering(x_train).reshape(-1,K,32,32), scattering(x_test).reshape(-1,K,32,32)
-        # else:
-        x_train, y_train = next(iter(DataLoader(df.getTrainSet('shadow'), infer_length, shuffle=True)))
-        x_test, y_test = next(iter(DataLoader(df.getTestSet('shadow'), infer_length, shuffle=True)))
-        x_train, y_train = x_train.numpy(), y_train.numpy()
-        x_test, y_test = x_test.numpy(), y_test.numpy()
-        attack.calibrate_threshold(shadow_model, x_train, y_train, x_test, y_test)
     print('Start inferring')
     member_probs, member_labels = attack.infer(target_model, target_mem_loader)
     nonmember_probs, nonmember_labels = attack.infer(target_model, target_nonmem_loader)
@@ -176,9 +155,9 @@ if __name__ == '__main__':
     parser.add_argument('--func', default='relu', type=str, choices=[
         'relu','tanh','loss','adp_alloc','gep','rgp','handcraft','lp-2st','alibi','pate','adpclip','knn','dpgen'
     ])
-    parser.add_argument('--type', default='white', type=str, choices=['black','white','label','white_old'])
-    parser.add_argument("--dataset", type=str, default="cifar10", help="Dataset to run training",)
-    parser.add_argument("--net", type=str, default="simple",)
+    parser.add_argument('--type', default='white', type=str, choices=['black','white'])
+    parser.add_argument("--dataset", type=str, default="cifar10", choices=['mnist', 'fmnist', 'svhn', 'cifar10'], help="Dataset to run training",)
+    parser.add_argument("--net", type=str, default="simple",choices=['simplenn', 'resnet', 'inception', 'vgg'])
     parser.add_argument("--seed", type=int, default=11337, help="Seed")
     parser.add_argument("--epoch", type=int, default=50, help="epochs to train attack model")
     # Privacy

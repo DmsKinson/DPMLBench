@@ -20,7 +20,8 @@ def gen_scripts(params):
             f.write(cmd)
         
 params = itertools.product(nets, datasets, eps)
-# params = [
-
-# ]
+params = [
+    # (net, dataset, eps)
+    ('resnet', 'cifar10', 1)
+]
 gen_scripts(params)

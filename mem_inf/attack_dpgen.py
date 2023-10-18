@@ -13,7 +13,6 @@ sys.path.append(pwd+'/../')
 
 # for loading GEP model
 sys.path.append(pwd+'/../GEP')
-import basis_matching
 
 from db_models import DB_Model
 
@@ -23,9 +22,7 @@ import argparse
 from DataFactory import DataFactory
 from sklearn import metrics
 import tools
-import config
 from AttackFactory import get_attack
-from data_manager import get_md5
 import numpy as np
 
 torch.set_warn_always(False)
@@ -42,7 +39,6 @@ def save_posterior(infer, attack_type:str, func:str, net:str, dataset:str, eps:f
     if(extra != None):
         sess += extra
     posterior_path = tools.save_pt(sess, infer, dst_dir=mia_dir.as_posix())
-    posterior_checksum = get_md5(posterior_path)
 
     ent = sqlite_proxy.insert_mia(
         type=attack_type,
@@ -51,9 +47,7 @@ def save_posterior(infer, attack_type:str, func:str, net:str, dataset:str, eps:f
         dataset=dataset,
         eps=eps,
         prob_loc=posterior_path,
-        prob_checksum=posterior_checksum,
         auc=auc,
-        host_ip=config.HOST_IP,
         shadow_dp=shadow_dp,
         extra=extra,
     )
