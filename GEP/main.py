@@ -201,8 +201,7 @@ def main(args):
     csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../exp/{FUNC_NAME}')
     net_path = tools.save_net(sess, net, f'{pwd}/../trained_net/{FUNC_NAME}')
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
-    sqlite_proxy.rpc_insert_net(ent)
+    sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Differentially Private learning with GEP')

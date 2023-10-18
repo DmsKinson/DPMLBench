@@ -134,7 +134,7 @@ class GEP(nn.Module):
 
             sqrt_num_param_list = np.sqrt(np.array(num_param_list))
             num_bases_list = self.num_bases * (sqrt_num_param_list/np.sum(sqrt_num_param_list))
-            num_bases_list = num_bases_list.astype(np.int)
+            num_bases_list = num_bases_list.astype(int)
             
             total_p = 0
             offset = 0

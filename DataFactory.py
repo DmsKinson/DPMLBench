@@ -8,7 +8,7 @@ import os
 pwd = os.path.split(os.path.realpath(__file__))[0]
 
 SUPPORTED = ['mnist','fmnist','imagenet', 'svhn', 'cifar10','cifar100']
-PUBSET_LENGTH = 0
+PUBSET_LENGTH = 2000
 WHOLE_TEST_LENGTH = 10000       # trim all testset to the same
 
 UDA_TEST_LENGTH = 1000  # UDA testset length of target model
