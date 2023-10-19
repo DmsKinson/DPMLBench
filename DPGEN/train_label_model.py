@@ -5,20 +5,14 @@ sys.path.append(os.path.join(pwd,'..'))
 
 import torch
 from DataFactory import DataFactory
-from models import get_model
 import argparse
 import tools
-from torch.utils.data.dataset import TensorDataset
-from torch.utils.data.dataloader import DataLoader,Dataset
-from sqlite_proxy import TYPE_TARGET
-from torchvision.io import read_image,ImageReadMode
+from torch.utils.data.dataloader import DataLoader
 import torchvision.transforms as transform
 import os
 import torch.nn as nn
 import torch.optim as optim
-from tqdm import tqdm
 from helper.net import MultiClassifier
-import sqlite_proxy
 
 def train_label_net(dataset_name):
     print('Training label model')

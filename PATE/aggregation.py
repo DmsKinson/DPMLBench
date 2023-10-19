@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch.functional import Tensor
 from torch.utils.data.dataset import Dataset, Subset
