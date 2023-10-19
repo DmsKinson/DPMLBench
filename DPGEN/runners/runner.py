@@ -3,19 +3,17 @@ pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(os.path.join(pwd,'..','..'))
 
 from time import time
-import numpy as np
 
 from DataFactory import DataFactory
 from losses.dsm import anneal_dsm_score_estimation
 from collections import deque
-import torch.nn.functional as F
 import logging
 import torch
 import os
 from torchvision.utils import make_grid, save_image
 from torch.utils.data import DataLoader
-from helper.net import RefineNet, MultiClassifier
-from datasets import get_dataset, data_transform, inverse_data_transform
+from helper.net import RefineNet
+from datasets import data_transform, inverse_data_transform
 from losses import get_optimizer
 from helper import anneal_Langevin_dynamics
 from helper import get_sigmas
@@ -56,8 +54,6 @@ class Runner():
                                  num_workers=self.config.data.num_workers, drop_last=True)
         test_iter = iter(test_loader)
         self.config.input_dim = self.config.data.image_size ** 2 * self.config.data.channels
-
-        tb_logger = self.config.tb_logger
 
         score = get_model(self.config)
         # import ipdb; ipdb.set_trace()

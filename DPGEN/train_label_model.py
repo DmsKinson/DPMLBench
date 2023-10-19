@@ -17,7 +17,6 @@ import os
 import torch.nn as nn
 import torch.optim as optim
 from tqdm import tqdm
-from data_manager import get_md5
 from helper.net import MultiClassifier
 import sqlite_proxy
 

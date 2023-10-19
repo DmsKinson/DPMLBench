@@ -54,8 +54,6 @@ def parse_args_and_config():
     # replace epsilon with args.eps in config
     new_config.training.epsilon = args.eps
     
-    tb_path = os.path.join(pwd,args.exp, 'tensorboard', args.doc)
-
     if not args.test and not args.sample:
         if not args.resume_training:
             if os.path.exists(args.log_path):
@@ -69,10 +67,8 @@ def parse_args_and_config():
 
                 if overwrite:
                     shutil.rmtree(args.log_path)
-                    shutil.rmtree(tb_path)
                     os.makedirs(args.log_path)
-                    if os.path.exists(tb_path):
-                        shutil.rmtree(tb_path)
+
                 else:
                     print("Folder exists. Program halted.")
                     sys.exit(0)
@@ -82,7 +78,6 @@ def parse_args_and_config():
             with open(os.path.join(args.log_path, 'config.yml'), 'w') as f:
                 yaml.dump(new_config, f, default_flow_style=False)
 
-        new_config.tb_logger = tb.SummaryWriter(log_dir=tb_path)
         # setup logger
         level = getattr(logging, args.verbose.upper(), None)
         if not isinstance(level, int):
@@ -145,8 +140,6 @@ def main():
     logging.info("Config =")
     print(">" * 80)
     config_dict = copy.copy(vars(config))
-    if not args.test and not args.sample and not args.fast_fid:
-        del config_dict['tb_logger']
     print(yaml.dump(config_dict, default_flow_style=False))
     print("<" * 80)
 
