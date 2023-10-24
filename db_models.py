@@ -8,39 +8,8 @@ DATABASE_DIR = os.path.join(pwd, 'database')
 if(not os.path.isdir(DATABASE_DIR)):
     os.makedirs(DATABASE_DIR, exist_ok=True)
 MAIN_DB_PATH = os.path.join(DATABASE_DIR, 'main.db')
-MERGE_DB_PATH = os.path.join(DATABASE_DIR, 'merge.db')
 
 main_db = SqliteDatabase(MAIN_DB_PATH)
-merge_db = SqliteDatabase(MERGE_DB_PATH)
-
-class DB_AccStat(Model):
-    func = CharField()
-    net = CharField()
-    dataset = CharField()
-    eps = FloatField(null=True)
-    
-    mean = FloatField(null=True)
-    std = FloatField(null=True)
-    class Meta:
-        table_name = 'AccStat'
-        database = merge_db
-
-class DB_PrivacyStat(Model):
-    func = CharField()
-    net = CharField()
-    dataset = CharField()
-    eps = FloatField(null=True)
-    type = CharField()
-    
-    auc_mean = FloatField(null=True)
-    auc_std = FloatField(null=True)
-    prop_mean = FloatField(null=True)
-    prop_std = FloatField(null=True)
-    class Meta:
-        table_name = 'PrivacyStat'
-        database = merge_db
-
-
 
 class YamlField(CharField):
     def db_value(self, value):
@@ -140,11 +109,6 @@ class DB_Privacy(BaseModel):
     class Meta:
         table_name = 'Privacy'
 
-merge_db.create_tables([
-    DB_AccStat,
-    DB_PrivacyStat,
-])
-
 main_db.create_tables([
     DB_Func,
     DB_Model,
@@ -152,4 +116,4 @@ main_db.create_tables([
     DB_Attack,
     DB_Utility,
     DB_Privacy,
-    ])
+])
