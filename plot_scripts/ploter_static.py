@@ -4,16 +4,13 @@ sys.path.append(os.path.join(pwd,'..'))
 
 import argparse
 from enum import Enum
-from matplotlib import ticker
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import csv
 import time
 import numpy as np
 from name_map import NETS_MAP, DATASETS_MAP, FUNCS_CFG_MAP,FUNC_DB2FIGURE,FUNC_DB2TABLE
 
-from db_models import DB_AccStat, DB_PrivacyStat
+from db_merge import DB_AccStat, DB_PrivacyStat
 import logging
 
 logging.basicConfig(
@@ -167,6 +164,9 @@ class AccPloter():
         self.format = kwargs.get('format','png')
         default_name = f'acc_{time.strftime("%m_%d_%H:%M:%S",time.localtime())}'
         self.figure_name = kwargs.get('figure_name')
+        self.figure_dir = os.path.join(pwd, '..', 'figure')
+        if(not os.path.isdir(self.figure_dir)):
+            os.makedirs(self.figure_dir)
         if(self.figure_name == None):
             self.figure_name = default_name
         self.NETS_MAP = dict(zip(net_list,[NETS_MAP[net] for net in net_list]))
@@ -212,25 +212,25 @@ class AccPloter():
                     if(config['db_name'] == 'gep' and net in ['inception','vgg']):
                         continue
                     ypoints,stds = self.query_ypoints(config['db_name'], net, dataset)
-                    # ypoints = [100*(1-y/baseline) for y in ypoints]
                     length = len(ypoints)
                     axe.plot(self.eps[:length], ypoints, marker=config['marker'], markersize=5, markerfacecolor='white', c=config['color'], label=config.get('display_name',config['db_name']))
                     axe.errorbar(self.eps[:length], ypoints, stds, c=config['color'],fmt='none',capsize=3)
+
         # get legends from simple-mnist setting, which has all funcs
         handles, labels = self.axes_tuple[0,0].get_legend_handles_labels()
         labels.append(self.dash_name)
         handles.append(dash_line)
         if(len(self.DATASETS_MAP)==1):
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.3),labelspacing=1,ncol=len(self.FUNCS_CFG)+1)
-            # self.fig.supxlabel('Privacy Budget',y=-0.15 ,fontsize=self.SUPLABEL_SIZE)
+
         elif(len(self.DATASETS_MAP)==2):
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.06),labelspacing=1,ncol=len(self.FUNCS_CFG)+1)
-            # self.fig.supxlabel('Privacy Budget',y=-0.02 ,fontsize=self.SUPLABEL_SIZE)
+
         else:
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='center',bbox_to_anchor=(0.5,0.03), ncol=len(self.FUNCS_CFG)+1,labelspacing=1)
-            # self.fig.supxlabel('Privacy Budget', y=0.06, fontsize=self.SUPLABEL_SIZE)
+
         self.fig.supylabel('Accuracy (%)', x=0.09, fontsize=self.SUPLABEL_SIZE)
-        self.fig.savefig(f'{pwd}/../figure/{self.figure_name}.{self.format}',bbox_inches='tight')
+        self.fig.savefig(os.path.join(self.figure_dir, f'{self.figure_name}.{self.format}'), bbox_inches='tight')
 
     def get_baseline(self, net, dataset):
         ent = DB_AccStat.get_or_none(
@@ -308,9 +308,7 @@ class MiaPloter(AccPloter):
             for y, (dataset, display_dataset) in enumerate(self.DATASETS_MAP.items()) :
                 axe:Axes = self.axes_tuple[y,x]
                 self.set_axe_format(x, display_net, y, display_dataset, axe)
-                
                 baseline = self.get_baseline(net, dataset,self.attack_type)
-                # axe.axhline(baseline, ls='--',c='black')
 
                 for i_func, config in enumerate(self.FUNCS_CFG) :
                     # special case
@@ -324,15 +322,15 @@ class MiaPloter(AccPloter):
         handles, labels = self.axes_tuple[0,0].get_legend_handles_labels()
         if(len(self.DATASETS_MAP)==1):
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.26),labelspacing=1,ncol=len(self.FUNCS_CFG))
-            # self.fig.supxlabel(self.supxlabel,y=-0.1 ,fontsize=self.SUPLABEL_SIZE)
+
         elif(len(self.DATASETS_MAP)==2):
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.1),labelspacing=1,ncol=len(self.FUNCS_CFG))
-            # self.fig.supxlabel(self.supxlabel,y=-0.02 ,fontsize=self.SUPLABEL_SIZE)
+
         else:
             self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='center',bbox_to_anchor=(0.5,0.03), ncol=len(self.FUNCS_CFG),labelspacing=1)
-            # self.fig.supxlabel(self.supxlabel, y=0.06, fontsize=self.SUPLABEL_SIZE)
+
         self.fig.supylabel(self.supylabel, x=0.09, fontsize=self.SUPLABEL_SIZE)
-        self.fig.savefig(os.path.join(pwd,'..','figure',f'{self.figure_name}.{self.format}'),bbox_inches='tight')
+        self.fig.savefig(os.path.join(self.figure_dir, f'{self.figure_name}.{self.format}'), bbox_inches='tight')
         
     def get_metric(self,ent):
         '''
@@ -409,7 +407,6 @@ class MiaPloter(AccPloter):
             axe.set_ylim(0,100)
         axe.set_xlim(0, self.group_l[-1]+self.group_margin*2+self.group_width)
         axe.tick_params(axis='x', which='both', length=1, width=2)
-        # l,r = axe.get_xlim()
         axe.set_xticks(ticks=self.group_l+self.group_width/2 )
         axe.set_xticklabels(labels=self.EPS)
         
@@ -440,7 +437,6 @@ class MultiMiaPloter(MiaPloter):
         self.error_params = {
             'elinewidth':self.bar_width/10,
         }
-        self.shadow_dp = True
 
     def get_baseline(self, net, dataset, attack_type):
         ent = DB_PrivacyStat.get_or_none(
@@ -464,7 +460,6 @@ class MultiMiaPloter(MiaPloter):
         axe.set_ylim(0,39)
         axe.set_xlim(0, self.group_l[-1]+self.group_margin*2+self.group_width)
         axe.tick_params(axis='x', which='both', length=1, width=2)
-        # l,r = axe.get_xlim()
         axe.set_xticks(ticks=self.group_l+self.group_width/2 )
         axe.set_xticklabels(labels=self.EPS)
         
@@ -519,13 +514,11 @@ class MultiMiaPloter(MiaPloter):
                         continue
                     ypoints, stds = self.query_ypoints(config['db_name'], net, self.dataset, attack_type)
                     axe.bar(self.group_l+i_func*self.bar_width, ypoints, width=self.bar_width, color=config['color'], edgecolor='white', yerr=stds, error_kw=self.error_params, linewidth=0, label=config.get('display_name',config['db_name']),align='edge')
-                    # axe.errorbar(self.group_l+i_func*self.bar_width, ypoints, stds, fmt='none', c=config['color'])
         handles, labels = self.axes_tuple[0,0].get_legend_handles_labels()
         
         self.fig.legend(handles, labels, fontsize=self.LEGEND_FONTSIZE, loc='lower center',bbox_to_anchor=(0.5,-0.14),labelspacing=1,ncol=len(self.FUNCS_CFG))
-        # self.fig.supxlabel(self.supxlabel,y=-0.04 ,fontsize=self.SUPLABEL_SIZE)
         self.fig.supylabel(self.supylabel, x=0.09, fontsize=self.SUPLABEL_SIZE)
-        self.fig.savefig(f'{pwd}/../figure/{self.figure_name}.{self.format}',bbox_inches='tight')
+        self.fig.savefig(os.path.join(self.figure_dir, f'{self.figure_name}.{self.format}'), bbox_inches='tight')
 
 class ShadowDPPloter(MiaPloter):
     def __init__(self, dpi=300, metric_type: str = 'auc', attack_type: str = 'black', shadow_dp: bool = False, **kwargs) -> None:
@@ -541,7 +534,6 @@ class ShadowDPPloter(MiaPloter):
         axe.set_ylim(0,1)
         axe.set_xlim(0, self.group_l[-1]+self.group_margin*2+self.group_width)
         axe.tick_params(axis='x', which='both', length=1, width=2)
-        # l,r = axe.get_xlim()
         axe.set_xticks(ticks=self.group_l+self.group_width/2 )
         axe.set_xticklabels(labels=self.EPS)
         
@@ -558,12 +550,7 @@ class ShadowDPPloter(MiaPloter):
             for y, (dataset, display_dataset) in enumerate(self.DATASETS_MAP.items()) :
                 axe:Axes = self.axes_tuple[y,x]
                 self.set_axe_format(x, display_net, y, display_dataset, axe)
-                
-                # baseline = self.get_baseline(net, dataset,'white_old')
                 axe.axhline(0.5, ls='--',c='#AB4533')
-
-                # baseline = self.get_baseline(net, dataset,'white')
-                # axe.axhline(baseline, ls='--',c='#FF7F0E')
 
                 for i_func, config in enumerate(self.FUNCS_CFG) :
                     ypoints = self.query_ypoints(config['db_name'], net, dataset, config['shadow_dp'])
@@ -586,51 +573,7 @@ def main(args):
             figure_name = args.name,
             funcs_cfg=FUNCS_DICT[args.funcs],
             format=args.format
-        ).plot_and_save()
-
-    if(args.mia):
-        print('plot mia')
-        MiaPloter(
-            metric_type=args.metric,
-            attack_type=args.type,
-            shadow_dp=args.shadow_dp,
-            funcs_cfg=FUNCS_DICT[args.funcs],
-            nets=args.nets,
-            datasets=args.datasets,
-            figure_name = args.name,
-            format=args.format
-        ).plot_and_save()
-    # comparison between old and new attack network architecture
-    if(args.test):
-        print('test')
-        TEMP_FUNCS_CFG = [
-            {
-                'db_name':'relu',
-                'type':'black',
-                'color':'#FF7F0E',
-                'display_name':'shadow with dp',
-                'shadow_dp':True,
-                'marker':'>'
-            },
-            {
-                'db_name':'relu',
-                'type':'black',
-                'color':'#2CA02C',
-                'display_name':'shadow w/o dp',
-                'shadow_dp':False,
-                'marker':'<'
-            },
-        ]
-        ShadowDPPloter(
-            metric_type=args.metric,
-            attack_type=args.type,
-            shadow_dp=args.shadow_dp,
-            funcs_cfg=TEMP_FUNCS_CFG,
-            nets=args.nets,
-            datasets=args.datasets,
-            figure_name = args.name,
-            format=args.format
-        ).plot_and_save()
+        ).plot_and_save() 
 
     if(args.multi):
         logger.info(f"Plot multi-mia figure: {args.nets, args.datasets, args.funcs}")
@@ -648,9 +591,9 @@ def main(args):
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--test','-t',action='store_true')
+    # parser.add_argument('--test','-t',action='store_true')
     parser.add_argument('--acc','-a', action='store_true')
-    parser.add_argument('--mia','-m', action='store_true')
+    # parser.add_argument('--mia','-m', action='store_true')
     parser.add_argument('--multi', action='store_true')
     parser.add_argument('--shadow_dp', action='store_true')
 

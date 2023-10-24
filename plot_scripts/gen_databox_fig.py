@@ -9,7 +9,7 @@ from db_models import  DB_Privacy, DB_Utility
 import matplotlib.pyplot as plt
 import time
 from name_map import NETS_MAP, DATASETS_MAP
-from ploter import FUNCS_CFG,DB_DATASETS,DB_NETS,METRIC_DICT,MetricType,FUNCS_DICT
+from ploter_static import FUNCS_CFG,DB_DATASETS,DB_NETS,METRIC_DICT,MetricType,FUNCS_DICT
 from peewee import *
 
 DATABASE_DIR = os.path.join(pwd,'..','database')
