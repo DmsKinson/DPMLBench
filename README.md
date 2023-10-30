@@ -14,16 +14,14 @@ pip install -r requirements.txt
 
 
 ## Replicate
-Run `bash replicate_figure.sh`
+
+Run `bash replicate_figure.sh` to replicate plots in the paper.
 
 ## Train
 
 ## Attack
 
 ## Citation
-```
-
-```
 
 
 ## Acknowledgements
