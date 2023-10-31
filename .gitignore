@@ -132,3 +132,4 @@ dataset/
 exp/
 trained_net/
 *.pt
+*.pth

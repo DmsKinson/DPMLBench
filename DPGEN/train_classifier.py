@@ -12,7 +12,6 @@ from torch.utils.data.dataset import TensorDataset
 from torch.utils.data.dataloader import DataLoader
 import torchvision.transforms as transform
 import os
-from data_manager import get_md5
 import sqlite_proxy
 
 
@@ -49,11 +48,9 @@ def main(args):
 
     sess = f'{args.net}_{args.dataset}_{args.eps}'
     csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    exp_checksum = get_md5(csv_path)
     net_path = tools.save_net(sess, model, f'{pwd}/../trained_net/{FUNC_NAME}')
-    model_checksum = get_md5(net_path)
 
-    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, model_checksum=model_checksum, exp_checksum=exp_checksum, extra=args.extra)
+    ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra=args.extra)
     sqlite_proxy.rpc_insert_net(ent)
     
 
