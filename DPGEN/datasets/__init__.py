@@ -1,11 +1,7 @@
 import os
 import torch
 import torchvision.transforms as transforms
-from torchvision.datasets import CIFAR10, LSUN, FashionMNIST, MNIST, SVHN
-# from datasets.celeba import CelebA
-# from datasets.ffhq import FFHQ
-from torch.utils.data import Subset
-import numpy as np
+from torchvision.datasets import CIFAR10, FashionMNIST, MNIST, SVHN
 
 def get_dataset(args, config):
     if config.data.random_flip is False:
@@ -42,34 +38,6 @@ def get_dataset(args, config):
                                transform=test_transform)
     elif config.data.dataset == 'svhn':
         dataset = SVHN
-    elif config.data.dataset == 'CELEBA':
-        if config.data.random_flip:
-            dataset = CelebA(root=os.path.join(args.exp, 'datasets', 'celeba'), split='train',
-                             transform=transforms.Compose([
-                                 transforms.CenterCrop(140),
-                                 transforms.Resize(config.data.image_size),
-                                 transforms.RandomHorizontalFlip(),
-                                 transforms.ToTensor(),
-                             ]), download=False)
-        else:
-            dataset = CelebA(root=os.path.join(args.exp, 'datasets', 'celeba'), split='train',
-                             transform=transforms.Compose([
-                                 transforms.CenterCrop(140),
-                                 transforms.Resize(config.data.image_size),
-                                 transforms.ToTensor(),
-                             ]), download=False)
-
-        test_dataset = CelebA(root=os.path.join(args.exp, 'datasets', 'celeba_test'), split='test',
-                              transform=transforms.Compose([
-                                  transforms.CenterCrop(140),
-                                  transforms.Resize(config.data.image_size),
-                                  transforms.ToTensor(),
-                              ]), download=False)
-
-
-    
-  
-
     return dataset, test_dataset
 
 def logit_transform(image, lam=1e-6):
