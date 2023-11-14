@@ -23,6 +23,13 @@ Run `bash replicate_figure.sh` to replicate plots in the paper.
 
 ## Citation
 
+ @inproceedings{WZZCMLFC23,
+    author = {Chengkun Wei and Minghu Zhao and Zhikun Zhang and Min Chen and Wenlong Meng and Bo Liu and Yuan Fan and Wenzhi Chen},
+    title = {{DPMLBench: Holistic Evaluation of Differentially Private Machine Learning}},
+    booktitle = {{ACM CCS}},
+    publisher = {},
+    year = {2023},
+}
 
 ## Acknowledgements
 Our implementation refers to the source code from the following repositories:
