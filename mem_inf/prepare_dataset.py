@@ -2,9 +2,9 @@ import pathlib
 from opacus import GradSampleModule
 import torch
 import argparse
-import sys
+import sys,os
 pwd = sys.path[0]
-sys.path.append(pwd+'/../.')
+sys.path.append(os.path.join(pwd, '..'))
 from DataFactory import DataFactory
 from torch.utils.data.dataset import Subset, Dataset
 from torch.utils.data.dataloader import DataLoader

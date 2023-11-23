@@ -2,7 +2,7 @@ import sys
 import os
 
 pwd = os.path.split(os.path.realpath(__file__))[0]
-sys.path.append(pwd+'/..')
+sys.path.append(os.path.join(pwd, '..'))
 
 from pathlib import Path
 import argparse

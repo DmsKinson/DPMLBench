@@ -1,6 +1,6 @@
+import os
 import itertools
-import sys
-dir = sys.path[0]
+pwd = os.path.split(os.path.realpath(__file__))[0]
 
 types = ['label']
 datasets=['mnist','fmnist','svhn','cifar10']
@@ -16,11 +16,11 @@ def gen_scripts(params):
         type, func, net, dataset, e = param
         # baseline: non-dp target and shadow 
         if(e is None):
-            cmd = f'python3 -u {dir}/attack.py '+f"--shadow_extra uda --target_extra uda --type %s --func %s --net %s --dataset %s" % param[:-1];
+            cmd = f"python3 -u {os.path.join(pwd, 'attack.py')} "+f"--shadow_extra uda --target_extra uda --type %s --func %s --net %s --dataset %s" % param[:-1];
         # non-dp shadow, dp target
         else: 
-            cmd = f'python3 {dir}/attack.py '+f"--shadow_extra uda --target_extra uda --type %s --func %s --net %s --dataset %s --eps %s" % param
-        with open(sys.path[0]+'/../scripts/queue/'+"attack_%s_%s_%s_%s_%s.sh"%param,'wt') as f:
+            cmd = f"python3 {os.path.join(pwd, 'attack.py')} "+f"--shadow_extra uda --target_extra uda --type %s --func %s --net %s --dataset %s --eps %s" % param
+        with open(os.path.join(pwd,'..','..','scripts',"attack_%s_%s_%s_%s_%s.sh"%param),'wt') as f:
             f.write(cmd)
 
 params = itertools.product(types,funcs,nets,datasets,eps)

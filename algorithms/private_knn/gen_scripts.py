@@ -1,7 +1,6 @@
-import sys
+import os
 import itertools
-
-pwd = sys.path[0]
+pwd = os.path.split(os.path.realpath(__file__))[0]
 
 datasets=['mnist','fmnist','svhn','cifar10']
 # datasets = ['mnist']
@@ -17,10 +16,10 @@ def gen_scripts(params):
     for param in params:
         net, dataset, e = param
         if(e is None):
-            cmd = f'python3 {pwd}/main.py '+f" --net %s --dataset %s --batchsize 256 --epoch {n_epoch}" % param[:-1]
+            cmd = f"python3 {os.path.join(pwd, 'main.py')} "+f" --net %s --dataset %s --batchsize 256 --epoch {n_epoch}" % param[:-1]
         else:
-            cmd = f'python3 {pwd}/main.py '+f" --net %s --dataset %s --eps %s --batchsize 256 --epoch {n_epoch}" % param
-        with open(sys.path[0]+'/../scripts/queue/'+"knn_%s_%s_%s.sh"%param,'wt') as f:
+            cmd = f"python3 {os.path.join(pwd, 'main.py')} "+f" --net %s --dataset %s --eps %s --batchsize 256 --epoch {n_epoch}" % param
+        with open(os.path.join(pwd,'..','..','scripts',"knn_%s_%s_%s.sh"%param),'wt') as f:
             f.write(cmd)
 
 params = itertools.product(nets,datasets,eps)

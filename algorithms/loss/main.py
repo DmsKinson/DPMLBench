@@ -2,7 +2,7 @@ import sys
 import os
 
 pwd = os.path.split(os.path.realpath(__file__))[0]
-sys.path.append(pwd+"/../..") 
+sys.path.append(os.path.join(pwd, '..', '..'))
 
 import torch
 import opacus
@@ -76,7 +76,7 @@ def main(args):
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    data_factory = DataFactory(args.dataset, pwd+'/../../dataset')
+    data_factory = DataFactory(which=args.dataset, data_root=args.data_root)
 
     trainset = data_factory.getTrainSet()
     testset = data_factory.getTestSet()
@@ -116,14 +116,15 @@ def main(args):
     if(args.private):
         sess = sess+f'_eps{args.eps}'
     
-    csv_path = tools.save_csv(sess, csv_list,f'{pwd}/../../exp/{FUNC_NAME}')
-    net_path = tools.save_net(sess, net, f'{pwd}/../../trained_net/{FUNC_NAME}')
+    csv_path = tools.save_csv(sess, csv_list, os.path.join(pwd,'..','..','exp',FUNC_NAME))
+    net_path = tools.save_net(sess, net, os.path.join(pwd, '..', '..', 'trained_net', FUNC_NAME))
 
     ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--net', default='simple', type=str)
+    parser.add_argument('--data_root',default=os.path.join(pwd,'..','..','dataset'), type=str, help='directory of dataset stored or loaded')
     parser.add_argument('--dataset', default='mnist', type=str)
     parser.add_argument('--lr', default=0.01, type=float)
     parser.add_argument('--epoch', default=60, type=int)

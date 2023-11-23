@@ -1,7 +1,6 @@
-import sys
+import os
 import itertools
-
-pwd = sys.path[0]
+pwd = os.path.split(os.path.realpath(__file__))[0]
 
 # datasets=['mnist','fmnist','svhn','cifar10']
 datasets = ['svhn','cifar10']
@@ -21,7 +20,7 @@ def gen_scripts(params):
             cmd = f'python3 {pwd}/uda_main.py '+f" --net %s --dataset %s --batchsize 256 --epoch {n_epoch[dataset]} --n_query {n_query[dataset]}" % param[:-1]
         else:
             cmd = f'python3 {pwd}/uda_main.py '+f" --net %s --dataset %s --eps %s --batchsize 256 --epoch {n_epoch[dataset]}  --n_query {n_query[dataset]}" % param
-        with open(sys.path[0]+'/../scripts/queue/'+"uda_knn_%s_%s_%s.sh"%param,'wt') as f:
+        with open(os.path.join(pwd,'..','..','scripts',"uda_knn_%s_%s_%s.sh"%param),'wt') as f:
             f.write(cmd)
 
 params = itertools.product(nets,datasets,eps)

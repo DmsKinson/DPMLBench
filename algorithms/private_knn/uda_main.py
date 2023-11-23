@@ -2,8 +2,8 @@ import sys,os
 
 import numpy as np
 
-pwd = sys.path[0]
-sys.path.append(pwd+'/..')
+pwd = os.path.split(os.path.realpath(__file__))[0]
+sys.path.append(os.path.join(pwd, '..', '..'))
 
 import argparse
 import torch
@@ -167,8 +167,8 @@ def main(args):
             print('Test loss:',test_loss, ' Test acc:',test_acc,' Time cost:',time_cost)
 
     sess = f'{args.net}_{args.dataset}_e{args.epoch}_{args.eps}_uda'
-    csv_path = tools.save_csv(sess, csv_list, f'{pwd}/../exp/{FUNC_NAME}')
-    net_path = tools.save_net(sess, model, f'{pwd}/../trained_net/{FUNC_NAME}')
+    csv_path = tools.save_csv(sess, csv_list, os.path.join(pwd,'..','..','exp',FUNC_NAME))
+    net_path = tools.save_net(sess, model, os.path.join(pwd, '..', '..', 'trained_net', FUNC_NAME))
 
     ent = sqlite_proxy.insert_net(func=FUNC_NAME, net=args.net, dataset=args.dataset, eps=args.eps, other_param=vars(args), exp_loc=csv_path, model_loc=net_path, extra='uda')
 
@@ -179,7 +179,8 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', default='mnist', type=str)
     parser.add_argument('--n_query', default=700, type=int, help='number of set for student training in a supervisored manner')
     parser.add_argument('--n_whole_samples', default=9000, type=int, help='number of samples that student access to')
-    parser.add_argument('--data_root', default=pwd+'/../dataset')
+    parser.add_argument('--data_root', default=os.path.join(pwd,'..','..','dataset'), type=str, help='directory of dataset stored or loaded')
+
     # parser.add_argument('--teacher_root', default='teachers', type=str)
     parser.add_argument('--batchsize', default=512, type=int)
     parser.add_argument('--epoch', default=50, type=int)
