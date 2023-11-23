@@ -8,7 +8,7 @@ import torchvision.transforms as transform
 from models import get_model
 import argparse
 import tools
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import sqlite_proxy
 
 FUNC_NAME = 'private-set'

@@ -6,7 +6,7 @@ sys.path.append(os.path.join(pwd, '..', '..'))
 
 import torch
 import opacus
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from torch.utils.data.dataloader import DataLoader
 from models import get_model
 import argparse

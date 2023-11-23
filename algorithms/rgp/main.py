@@ -11,7 +11,7 @@ import argparse
 import time
 
 from rgp_models import get_model
-from DataFactory import DataFactory
+from data_factory import DataFactory
 
 from get_noise_variance import get_sigma
 

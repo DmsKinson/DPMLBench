@@ -9,7 +9,7 @@ import utils
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from models import get_model
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from utils import train, test
 import tools
 import sqlite_proxy

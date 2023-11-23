@@ -4,7 +4,7 @@ pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(os.path.join(pwd,'..','..'))
 
 import torch
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from models import get_model
 import argparse
 import tools

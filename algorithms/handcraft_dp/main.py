@@ -6,7 +6,7 @@ from kymatio.torch import Scattering2D
 pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(os.path.join(pwd, '..', '..'))
 
-import DataFactory
+import data_factory
 import argparse
 import torch
 from opacus import PrivacyEngine
@@ -16,7 +16,7 @@ from models.ScatterLinear import ScatterLinear
 import tools
 import sqlite_proxy
 import time
-from DataFactory import TRANSFORM_DICT
+from data_factory import TRANSFORM_DICT
 
 FUNC_NAME = 'handcraft_dp'
 
@@ -30,7 +30,7 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     tools.set_rng_seed(args.seed)
     pwd = sys.path[0]
-    data_factory = DataFactory.DataFactory(args.dataset)
+    data_factory = data_factory.DataFactory(args.dataset)
     ori_trans_list = TRANSFORM_DICT[args.dataset]
     ori_trans_list.append(transforms.Resize(size=[32*4,32*4]))
     trainset = data_factory.getTrainSet(transform_list=ori_trans_list)

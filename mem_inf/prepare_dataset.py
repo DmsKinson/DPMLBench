@@ -5,7 +5,7 @@ import argparse
 import sys,os
 pwd = sys.path[0]
 sys.path.append(os.path.join(pwd, '..'))
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from torch.utils.data.dataset import Subset, Dataset
 from torch.utils.data.dataloader import DataLoader
 import pickle

@@ -12,7 +12,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torchvision import datasets, transforms
 from .networks import MLP, ConvNet, LeNet, AlexNet, VGG11BN, VGG11, ResNet18, ResNet18BN_AP
-from DataFactory import DataFactory
+from data_factory import DataFactory
 
 
 __all__ = ['get_dataset', 'get_network', 'get_time', 'get_loops', 'get_daparam', 'get_eval_pool', 'mkdir', 'flatten_tensor', 'inf_train_gen', 'TensorDataset', 'load_yaml', 'write_yaml']

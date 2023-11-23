@@ -12,7 +12,7 @@ import torch.utils.data
 import torch.nn.functional as F
 import torchvision.utils as vutils
 from .generator import netG
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from models import get_model
 from torch.utils.data.dataset import Subset
 from torchvision.utils import save_image

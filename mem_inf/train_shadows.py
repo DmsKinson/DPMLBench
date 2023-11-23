@@ -12,7 +12,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torch.utils.data.dataset import Subset
 from models import get_model
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import opacus
 from tools import MemoryManagerProxy
 

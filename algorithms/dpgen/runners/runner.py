@@ -1,10 +1,10 @@
 import sys,os
 pwd = os.path.split(os.path.realpath(__file__))[0]
-sys.path.append(os.path.join(pwd,'..','..'))
+sys.path.append(os.path.join(pwd,'..','..', '..'))
 
 from time import time
 
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from losses.dsm import anneal_dsm_score_estimation
 from collections import deque
 import logging

@@ -13,7 +13,7 @@ import torch.nn.parallel
 import torch.optim as optim
 import torch.utils.data as data
 import torch.utils.data.distributed
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import tools
 import time
 

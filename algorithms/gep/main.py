@@ -6,7 +6,7 @@ from opacus import GradSampleModule
 pwd = os.path.split(os.path.realpath(__file__))[0]
 sys.path.append(os.path.join(pwd, '..', '..'))
 
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import tools
 
 import torch

@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data.dataloader import DataLoader
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import noise_scheduler
 
 import argparse

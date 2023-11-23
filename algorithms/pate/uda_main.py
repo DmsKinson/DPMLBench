@@ -8,7 +8,7 @@ import utils
 from torch.utils.data import DataLoader,Subset
 import torch.optim as optim
 from models import get_model
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from utils import test
 import tools
 from semisupervise import uda   

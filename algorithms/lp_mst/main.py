@@ -6,7 +6,7 @@ sys.path.append(os.path.join(pwd, '..', '..'))
 import torch
 from torch import nn
 from torch.utils.data.dataset import  Subset
-from DataFactory import DataFactory
+from data_factory import DataFactory
 from torch.utils.data import DataLoader
 from rrprior import rr_prior
 import utils

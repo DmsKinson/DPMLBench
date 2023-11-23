@@ -12,7 +12,7 @@ from torch.utils.data.dataset import Subset,random_split,Dataset
 from torch.utils.data import DataLoader
 import torch.optim as optim
 from models import get_model
-from DataFactory import DataFactory
+from data_factory import DataFactory
 import tools
 from tqdm import tqdm
 from semisupervise import uda   
