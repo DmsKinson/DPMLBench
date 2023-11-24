@@ -21,8 +21,8 @@ During the actual experiments, we used the `gen_scripts.py` to generate runing s
 ### 
 ```
 DPMLBench/
-    |- algorithms/   DPML algorithms implement 
-    |- mem_inf/   Membership inference attack implement
+    |- algorithms/   DPML algorithms implementation
+    |- mem_inf/   Membership inference attack implementation
     |- models/   Code for Model architecture 
     |- origin_data/   Original statical data for replicate plots in the paper
     |- plot_scripts/   Generate plots and tables
@@ -31,8 +31,8 @@ DPMLBench/
 |- .gitignore
 |- clip_only_utils.py   Implement only clipping experiments
 |- data_factory.py    Split dataset and preprocess
-|- db_merge.py   Database define
-|- db_models.py   Database define
+|- db_merge.py   Database initialization
+|- db_models.py   Database initialization
 |- README.md  
 |- replicate_figure.sh   Replocate plots
 |- requirements.txt
